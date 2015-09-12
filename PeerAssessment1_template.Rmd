@@ -1,0 +1,146 @@
+---
+title: "PeerAssessment1"
+author: "Antonio Martínez Pineda"
+date: "8 de septiembre de 2015"
+output: html_document
+---
+```{r,echo=FALSE}
+knitr::opts_chunk$set(tidy=TRUE,comment=NA,warning=FALSE,message=FALSE) 
+```
+
+This is the analysis for the personal activity's dataset of the Reproducible Research Course. Data are in a comma-separated-value file (.csv) and the first action is obtaining the data. For this we use the `download.file` and `unzip` functions to download and unzip the file. After this we load data into R session.
+
+##Obtaining and transforming data
+
+```{r Obtaining data}
+urldir<-"https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+nfile<-"activity.zip"
+download.file(urldir,destfile = nfile,method = "libcurl")
+unzip("activity.zip")
+data<-read.csv("activity.csv")
+```
+
+Now let see the data.
+
+```{r First data sight}
+str(data)
+head(data)
+tail(data)
+summary(data)
+```
+
+Ok, date is a factor. I think it will be better to transform it into date object. We can do this using `ymd` function from lubridate package.
+
+```{r Transforming date}
+library(lubridate)
+data$date<-ymd(data$date)
+class(data$date)
+```
+
+##What is mean total number of steps taken per day?
+
+For answer this question we gonna use the dplyr package. Firstly, we `group_by` date and eliminate NA's. Then we compute the total number, mean (rounded at two decimals) and median of steps for each day. The median is zero for all days due the huge number of each day's intervals with zero steps.
+
+```{r mean total number of steps per day}
+library(dplyr)
+stepsByday<-group_by(data[!is.na(data$steps),],date)%>%summarise(stepsByday=sum(steps),day.mean=round(mean(steps),2),day.median=median(steps))
+stepsByday
+```
+
+We plot a histogram for total number of steps per day:
+
+```{r histogram for total number of steps per day}
+hist(stepsByday$stepsByday, col = "cyan",main = "Total number of steps per day",xlab = "Number of steps")
+```
+
+##What is the average daily activity pattern?
+
+Well, we continue ignoring NA's. So we compute the average of steps per 5-minute interval and plotting the time series. Using `summarise` function of dplyr packages we calculate the average for each interval.
+
+```{r Average daily pattern}
+daily.pattern<-group_by(data[!is.na(data$steps),],interval)%>%summarise(interval.ave=mean(steps))
+daily.pattern
+par(mar=c(5,4,1,2))
+with(daily.pattern,plot(interval,interval.ave,type="l",col="cyan",xlab="5-minute interval",ylab="Steps average"))
+max.steps<-round(max(daily.pattern$interval.ave),0)
+max.inter<-daily.pattern[daily.pattern$interval.ave==max(daily.pattern$interval.ave),]$interval
+text(max.inter+7,max.steps,labels = paste("Interval",max.inter,"=",max.steps,"steps",sep = " " ))
+par(mar=c(5.1,4.1,4.1,2.1))
+```
+
+As we can see in the time series plot the maximum average of steps corresponds to interval `r max.inter` with `r round(max(daily.pattern$interval.ave),2)` steps in average across all the days in the dataset.
+
+##Imputing missing values
+
+###1. Number of missing values in dataset
+
+Dataset only has missing values in *steps* variable, we can use `is.na` to compute a logical vector indicating **TRUE** where there is a missing data. With `sum` we coerced this logical vector to integer vector so **TRUE** is equal to 1L and **FALSE** is equal to 0L this give us the number of missing data (NA's = `r sum(is.na(data$steps))`).
+
+###2. Imputing missing values
+
+We calculate the mean of steps per interval to replace the missing values. This can be done with `summarise` function of dplyr package.
+
+```{r Generate replacement values}
+impute.data<-group_by(data,interval)%>%summarise(interval.mean=mean(steps,na.rm=T))
+impute.data
+```
+
+###3. Create a new dataset with the replacement of missing values
+
+Now with a loop we impute missing values for each interval with the mean of steps per interval. 
+
+```{r Repalcing values}
+noMissdata<-data
+for(i in seq_along(noMissdata$interval)){
+  interval.num<-noMissdata$interval[i]
+  if(is.na(noMissdata$steps[i])==TRUE){
+    noMissdata$steps[i]<-impute.data[impute.data$interval==interval.num,]$interval.mean
+  }
+}
+```
+
+###4. Report total number, mean and median of steps per day, analyze if differ from previous estiamtions and make a histogram of the total number of steps per day
+
+We repeat the summarise of *stepsByday* but with *noMissdata* data frame.
+
+```{r No missing descriptive measures}
+noMiss.stepByday<-group_by(noMissdata,date)%>%summarise(stepsByday=sum(steps),day.mean=round(mean(steps),2),day.median=round(median(steps),2))
+noMiss.stepByday
+```
+
+Because most of intervals have a different mean zero, the median for days with imputed values is quite higher.
+
+Let see the difference of total steps, mean and median graphically.
+
+```{r Difference in datasets without missing values and with imputed values}
+comparing<-rbind(stepsByday,noMiss.stepByday)
+dataset<-factor(c(rep("No missing values",53),rep("Imputed values",61)))
+comparing<-cbind(comparing,dataset)
+par(mar=c(3,6.5,2,.3),mfrow=c(3,1),cex.axis=0.8)
+boxplot(stepsByday~dataset,data=comparing,col=c("cyan","orange"),main="Total steps per day",horizontal=T,notch=T,las=1)
+boxplot(day.mean~dataset,data=comparing,col=c("cyan","orange"),main="Mean per day",horizontal=T,notch=T,las=1)
+boxplot(day.median~dataset,data=comparing,col=c("cyan","orange"),main="Median per day",horizontal=T,notch=T,las=1)
+```
+
+Although previous estimates present a wider variance, it seems there are no significant differences with imputed data.
+
+##Are there differences in activity patterns between weekdays and weekends?
+
+We use `weekdays` function to create a factor with levels "weekday" and "weekend". (as you can see my system date is in spanish)
+
+```{r Factor for weekdays}
+noMissdata$weekday<-weekdays(noMissdata$date)
+library(car)
+noMissdata$wday.wend<-recode(noMissdata$weekday,"c('lunes','martes','miércoles','jueves','viernes')='weekday';c('sábado','domingo')='weekend'",as.factor.result = T,levels = c("weekday","weekend"))
+```
+
+Now we compute average steps taken across weekday and across weekend with `mutate` function of dplyr. And plot with lattice in a timeseries.
+
+```{r Average steps for weekday and weekend}
+stepsByweekday<-group_by(noMissdata,interval,wday.wend)%>%mutate(weekday.mean=mean(steps,na.rm=T))
+stepsByweekday
+library(lattice)
+xyplot(weekday.mean~interval|wday.wend,data = stepsByweekday,type="l",main="Average number of steps across weekday and weekend",xlab="Interval",ylab="Number of steps",layout=c(1,2))
+```
+
+It seems that frequency of steps on weekends is a little more consistent thru intervals than it is on weekdays.
