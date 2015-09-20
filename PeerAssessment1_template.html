@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+<title></title>
+
+<script src="PeerAssessment1_template_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="PeerAssessment1_template_files/bootstrap-3.3.1/css/cerulean.min.css" rel="stylesheet" />
+<script src="PeerAssessment1_template_files/bootstrap-3.3.1/js/bootstrap.min.js"></script>
+<script src="PeerAssessment1_template_files/bootstrap-3.3.1/shim/html5shiv.min.js"></script>
+<script src="PeerAssessment1_template_files/bootstrap-3.3.1/shim/respond.min.js"></script>
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #0000ff; }
+code > span.ch { color: #008080; }
+code > span.st { color: #008080; }
+code > span.co { color: #008000; }
+code > span.ot { color: #ff4000; }
+code > span.al { color: #ff0000; }
+code > span.er { font-weight: bold; }
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img { 
+  max-width:100%; 
+  height: auto; 
+}
+</style>
+<div class="container-fluid main-container">
+
+
+
+
+<div id="peer-assessment-1" class="section level1">
+<h1>Peer Assessment 1</h1>
+<p><strong>Antonio Martínez Pineda</strong></p>
+<p><em>8 de septiembre de 2015</em></p>
+<p>This is the analysis for the personal activity’s dataset of the Reproducible Research Course. Data are in a comma-separated-value file (.csv) and the first action is obtaining the data, using <code>download.file</code> function we download the zipped data then <code>unzip</code> function extract the .csv and we load data into R session with <code>read.csv</code> function.</p>
+<div id="obtaining-and-transforming-data" class="section level2">
+<h2>Obtaining and transforming data</h2>
+<pre class="sourceCode r"><code class="sourceCode r">urldir &lt;-<span class="st"> &quot;https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip&quot;</span>
+destfile &lt;-<span class="st"> &quot;activity.zip&quot;</span>
+<span class="kw">download.file</span>(urldir, <span class="dt">destfile =</span> destfile, <span class="dt">method =</span> <span class="st">&quot;libcurl&quot;</span>)
+<span class="kw">unzip</span>(<span class="st">&quot;activity.zip&quot;</span>)
+data &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;activity.csv&quot;</span>)</code></pre>
+<p>Now let see the data.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">str</span>(data)</code></pre>
+<pre><code>&#39;data.frame&#39;:   17568 obs. of  3 variables:
+ $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+ $ date    : Factor w/ 61 levels &quot;2012-10-01&quot;,&quot;2012-10-02&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
+ $ interval: int  0 5 10 15 20 25 30 35 40 45 ...</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(data)</code></pre>
+<pre><code>  steps       date interval
+1    NA 2012-10-01        0
+2    NA 2012-10-01        5
+3    NA 2012-10-01       10
+4    NA 2012-10-01       15
+5    NA 2012-10-01       20
+6    NA 2012-10-01       25</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">tail</span>(data)</code></pre>
+<pre><code>      steps       date interval
+17563    NA 2012-11-30     2330
+17564    NA 2012-11-30     2335
+17565    NA 2012-11-30     2340
+17566    NA 2012-11-30     2345
+17567    NA 2012-11-30     2350
+17568    NA 2012-11-30     2355</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(data)</code></pre>
+<pre><code>     steps                date          interval     
+ Min.   :  0.00   2012-10-01:  288   Min.   :   0.0  
+ 1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8  
+ Median :  0.00   2012-10-03:  288   Median :1177.5  
+ Mean   : 37.38   2012-10-04:  288   Mean   :1177.5  
+ 3rd Qu.: 12.00   2012-10-05:  288   3rd Qu.:1766.2  
+ Max.   :806.00   2012-10-06:  288   Max.   :2355.0  
+ NA&#39;s   :2304     (Other)   :15840                   </code></pre>
+<p>Ok, date is a factor. I think it will be better to transform it into date object. We can do this using <code>ymd</code> function from lubridate package.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(lubridate)
+data$date &lt;-<span class="st"> </span><span class="kw">ymd</span>(data$date)
+<span class="kw">class</span>(data$date)</code></pre>
+<pre><code>[1] &quot;POSIXct&quot; &quot;POSIXt&quot; </code></pre>
+</div>
+<div id="what-is-mean-total-number-of-steps-taken-per-day" class="section level2">
+<h2>What is mean total number of steps taken per day?</h2>
+<p>For answer this question we gonna use the dplyr package. Firstly, we <code>group_by</code> date and eliminate NA’s. Then we compute the total number, mean (rounded at two decimals) and median of steps for each day. The median is zero for all days due the huge number of each day’s intervals with zero steps.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(dplyr)
+stepsByday &lt;-<span class="st"> </span><span class="kw">group_by</span>(data[!<span class="kw">is.na</span>(data$steps), ], date) %&gt;%<span class="st"> </span><span class="kw">summarise</span>(<span class="dt">stepsByday =</span> <span class="kw">sum</span>(steps), 
+    <span class="dt">day.mean =</span> <span class="kw">round</span>(<span class="kw">mean</span>(steps), <span class="dv">2</span>), <span class="dt">day.median =</span> <span class="kw">median</span>(steps))
+stepsByday</code></pre>
+<pre><code>Source: local data frame [53 x 4]
+
+         date stepsByday day.mean day.median
+1  2012-10-02        126     0.44          0
+2  2012-10-03      11352    39.42          0
+3  2012-10-04      12116    42.07          0
+4  2012-10-05      13294    46.16          0
+5  2012-10-06      15420    53.54          0
+6  2012-10-07      11015    38.25          0
+7  2012-10-09      12811    44.48          0
+8  2012-10-10       9900    34.38          0
+9  2012-10-11      10304    35.78          0
+10 2012-10-12      17382    60.35          0
+..        ...        ...      ...        ...</code></pre>
+<p>Now the mean for total number of steps taken per day is <strong>37.38</strong> and the median is <strong>0</strong>.</p>
+<p>We plot a histogram for total number of steps per day:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">hist</span>(stepsByday$stepsByday, <span class="dt">col =</span> <span class="st">&quot;cyan&quot;</span>, <span class="dt">main =</span> <span class="st">&quot;Total number of steps per day&quot;</span>, 
+    <span class="dt">xlab =</span> <span class="st">&quot;Number of steps&quot;</span>)</code></pre>
+<p><img src="PeerAssessment1_template_files/figure-html/histogram%20for%20total%20number%20of%20steps%20per%20day-1.png" /></p>
+</div>
+<div id="what-is-the-average-daily-activity-pattern" class="section level2">
+<h2>What is the average daily activity pattern?</h2>
+<p>Well, we continue ignoring NA’s. So we compute the average of steps per 5-minute interval and plotting the time series. Using <code>summarise</code> function of dplyr packages we calculate the average for each interval.</p>
+<pre class="sourceCode r"><code class="sourceCode r">daily.pattern &lt;-<span class="st"> </span><span class="kw">group_by</span>(data[!<span class="kw">is.na</span>(data$steps), ], interval) %&gt;%<span class="st"> </span><span class="kw">summarise</span>(<span class="dt">interval.ave =</span> <span class="kw">mean</span>(steps))
+daily.pattern</code></pre>
+<pre><code>Source: local data frame [288 x 2]
+
+   interval interval.ave
+1         0    1.7169811
+2         5    0.3396226
+3        10    0.1320755
+4        15    0.1509434
+5        20    0.0754717
+6        25    2.0943396
+7        30    0.5283019
+8        35    0.8679245
+9        40    0.0000000
+10       45    1.4716981
+..      ...          ...</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">5</span>, <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">2</span>))
+<span class="kw">with</span>(daily.pattern, <span class="kw">plot</span>(interval, interval.ave, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">col =</span> <span class="st">&quot;cyan&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;5-minute interval&quot;</span>, 
+    <span class="dt">ylab =</span> <span class="st">&quot;Steps average&quot;</span>))
+max.steps &lt;-<span class="st"> </span><span class="kw">round</span>(<span class="kw">max</span>(daily.pattern$interval.ave), <span class="dv">0</span>)
+max.inter &lt;-<span class="st"> </span>daily.pattern[daily.pattern$interval.ave ==<span class="st"> </span><span class="kw">max</span>(daily.pattern$interval.ave), 
+    ]$interval
+<span class="kw">text</span>(max.inter +<span class="st"> </span><span class="dv">7</span>, max.steps, <span class="dt">labels =</span> <span class="kw">paste</span>(<span class="st">&quot;Interval&quot;</span>, max.inter, <span class="st">&quot;=&quot;</span>, max.steps, 
+    <span class="st">&quot;steps&quot;</span>, <span class="dt">sep =</span> <span class="st">&quot; &quot;</span>))</code></pre>
+<p><img src="PeerAssessment1_template_files/figure-html/Average%20daily%20pattern-1.png" /></p>
+<p>As we can see in the time series plot the maximum average of steps corresponds to interval <strong>835</strong> with <strong>206.17</strong> steps in average across all the days in the dataset.</p>
+</div>
+<div id="imputing-missing-values" class="section level2">
+<h2>Imputing missing values</h2>
+<div id="number-of-missing-values-in-dataset" class="section level3">
+<h3>1. Number of missing values in dataset</h3>
+<p>Dataset only has missing values in <em>steps</em> variable, we can use <code>is.na</code> to compute a logical vector indicating <strong>TRUE</strong> where there is a missing data. With <code>sum</code> we coerced this logical vector to integer vector so <strong>TRUE</strong> is equal to 1L and <strong>FALSE</strong> is equal to 0L this give us the number of missing data (NA’s = 2304).</p>
+</div>
+<div id="imputing-missing-values-1" class="section level3">
+<h3>2. Imputing missing values</h3>
+<p>We calculate the mean of steps per interval to replace the missing values. This can be done with <code>summarise</code> function of dplyr package.</p>
+<pre class="sourceCode r"><code class="sourceCode r">impute.data &lt;-<span class="st"> </span><span class="kw">group_by</span>(data, interval) %&gt;%<span class="st"> </span><span class="kw">summarise</span>(<span class="dt">interval.mean =</span> <span class="kw">mean</span>(steps, 
+    <span class="dt">na.rm =</span> T))
+impute.data</code></pre>
+<pre><code>Source: local data frame [288 x 2]
+
+   interval interval.mean
+1         0     1.7169811
+2         5     0.3396226
+3        10     0.1320755
+4        15     0.1509434
+5        20     0.0754717
+6        25     2.0943396
+7        30     0.5283019
+8        35     0.8679245
+9        40     0.0000000
+10       45     1.4716981
+..      ...           ...</code></pre>
+</div>
+<div id="create-a-new-dataset-with-the-replacement-of-missing-values" class="section level3">
+<h3>3. Create a new dataset with the replacement of missing values</h3>
+<p>Now with a loop we impute missing values for each interval with the mean of steps per interval.</p>
+<pre class="sourceCode r"><code class="sourceCode r">noMissdata &lt;-<span class="st"> </span>data
+for (i in <span class="kw">seq_along</span>(noMissdata$interval)) {
+    interval.num &lt;-<span class="st"> </span>noMissdata$interval[i]
+    if (<span class="kw">is.na</span>(noMissdata$steps[i]) ==<span class="st"> </span><span class="ot">TRUE</span>) {
+        noMissdata$steps[i] &lt;-<span class="st"> </span>impute.data[impute.data$interval ==<span class="st"> </span>interval.num, 
+            ]$interval.mean
+    }
+}</code></pre>
+</div>
+<div id="report-total-number-mean-and-median-of-steps-per-day-analyze-if-differ-from-previous-estiamtions-and-make-a-histogram-of-the-total-number-of-steps-per-day" class="section level3">
+<h3>4. Report total number, mean and median of steps per day, analyze if differ from previous estiamtions and make a histogram of the total number of steps per day</h3>
+<p>We repeat the summarise of <em>stepsByday</em> but with <em>noMissdata</em> data frame.</p>
+<pre class="sourceCode r"><code class="sourceCode r">noMiss.stepByday &lt;-<span class="st"> </span><span class="kw">group_by</span>(noMissdata, date) %&gt;%<span class="st"> </span><span class="kw">summarise</span>(<span class="dt">stepsByday =</span> <span class="kw">sum</span>(steps), 
+    <span class="dt">day.mean =</span> <span class="kw">round</span>(<span class="kw">mean</span>(steps), <span class="dv">2</span>), <span class="dt">day.median =</span> <span class="kw">round</span>(<span class="kw">median</span>(steps), <span class="dv">2</span>))
+noMiss.stepByday</code></pre>
+<pre><code>Source: local data frame [61 x 4]
+
+         date stepsByday day.mean day.median
+1  2012-10-01   10766.19    37.38      34.11
+2  2012-10-02     126.00     0.44       0.00
+3  2012-10-03   11352.00    39.42       0.00
+4  2012-10-04   12116.00    42.07       0.00
+5  2012-10-05   13294.00    46.16       0.00
+6  2012-10-06   15420.00    53.54       0.00
+7  2012-10-07   11015.00    38.25       0.00
+8  2012-10-08   10766.19    37.38      34.11
+9  2012-10-09   12811.00    44.48       0.00
+10 2012-10-10    9900.00    34.38       0.00
+..        ...        ...      ...        ...</code></pre>
+<p>Because most of intervals have a different mean zero, the median for days with imputed values is quite higher.</p>
+<p>Let see the difference of total steps, mean and median graphically.</p>
+<pre class="sourceCode r"><code class="sourceCode r">comparing &lt;-<span class="st"> </span><span class="kw">rbind</span>(stepsByday, noMiss.stepByday)
+dataset &lt;-<span class="st"> </span><span class="kw">factor</span>(<span class="kw">c</span>(<span class="kw">rep</span>(<span class="st">&quot;No missing values&quot;</span>, <span class="dv">53</span>), <span class="kw">rep</span>(<span class="st">&quot;Imputed values&quot;</span>, <span class="dv">61</span>)))
+comparing &lt;-<span class="st"> </span><span class="kw">cbind</span>(comparing, dataset)
+<span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">3</span>, <span class="fl">6.5</span>, <span class="dv">2</span>, <span class="fl">0.3</span>), <span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">3</span>, <span class="dv">1</span>), <span class="dt">cex.axis =</span> <span class="fl">0.8</span>)
+<span class="kw">boxplot</span>(stepsByday ~<span class="st"> </span>dataset, <span class="dt">data =</span> comparing, <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;cyan&quot;</span>, <span class="st">&quot;orange&quot;</span>), <span class="dt">main =</span> <span class="st">&quot;Total steps per day&quot;</span>, 
+    <span class="dt">horizontal =</span> T, <span class="dt">notch =</span> T, <span class="dt">las =</span> <span class="dv">1</span>)
+<span class="kw">boxplot</span>(day.mean ~<span class="st"> </span>dataset, <span class="dt">data =</span> comparing, <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;cyan&quot;</span>, <span class="st">&quot;orange&quot;</span>), <span class="dt">main =</span> <span class="st">&quot;Mean per day&quot;</span>, 
+    <span class="dt">horizontal =</span> T, <span class="dt">notch =</span> T, <span class="dt">las =</span> <span class="dv">1</span>)
+<span class="kw">boxplot</span>(day.median ~<span class="st"> </span>dataset, <span class="dt">data =</span> comparing, <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;cyan&quot;</span>, <span class="st">&quot;orange&quot;</span>), <span class="dt">main =</span> <span class="st">&quot;Median per day&quot;</span>, 
+    <span class="dt">horizontal =</span> T, <span class="dt">notch =</span> T, <span class="dt">las =</span> <span class="dv">1</span>)</code></pre>
+<p><img src="PeerAssessment1_template_files/figure-html/Difference%20in%20datasets%20without%20missing%20values%20and%20with%20imputed%20values-1.png" /></p>
+<p>Although previous estimates present a wider variance, it seems there are no significant differences with imputed data.</p>
+</div>
+</div>
+<div id="are-there-differences-in-activity-patterns-between-weekdays-and-weekends" class="section level2">
+<h2>Are there differences in activity patterns between weekdays and weekends?</h2>
+<p>We use <code>weekdays</code> function to create a factor with levels “weekday” and “weekend”. (as you can see my system date is in spanish)</p>
+<pre class="sourceCode r"><code class="sourceCode r">noMissdata$weekday &lt;-<span class="st"> </span><span class="kw">weekdays</span>(noMissdata$date)
+<span class="kw">library</span>(car)
+noMissdata$wday.wend &lt;-<span class="st"> </span><span class="kw">recode</span>(noMissdata$weekday, <span class="st">&quot;c(&#39;lunes&#39;,&#39;martes&#39;,&#39;miércoles&#39;,&#39;jueves&#39;,&#39;viernes&#39;)=&#39;weekday&#39;;c(&#39;sábado&#39;,&#39;domingo&#39;)=&#39;weekend&#39;&quot;</span>, 
+    <span class="dt">as.factor.result =</span> T, <span class="dt">levels =</span> <span class="kw">c</span>(<span class="st">&quot;weekday&quot;</span>, <span class="st">&quot;weekend&quot;</span>))</code></pre>
+<p>Now we compute average steps taken across weekday and across weekend with <code>mutate</code> function of dplyr. And plot with lattice in a timeseries.</p>
+<pre class="sourceCode r"><code class="sourceCode r">stepsByweekday &lt;-<span class="st"> </span><span class="kw">group_by</span>(noMissdata, interval, wday.wend) %&gt;%<span class="st"> </span><span class="kw">mutate</span>(<span class="dt">weekday.mean =</span> <span class="kw">mean</span>(steps, 
+    <span class="dt">na.rm =</span> T))
+stepsByweekday</code></pre>
+<pre><code>Source: local data frame [17,568 x 6]
+Groups: interval, wday.wend
+
+       steps       date interval weekday wday.wend weekday.mean
+1  1.7169811 2012-10-01        0   lunes   weekday   2.25115304
+2  0.3396226 2012-10-01        5   lunes   weekday   0.44528302
+3  0.1320755 2012-10-01       10   lunes   weekday   0.17316562
+4  0.1509434 2012-10-01       15   lunes   weekday   0.19790356
+5  0.0754717 2012-10-01       20   lunes   weekday   0.09895178
+6  2.0943396 2012-10-01       25   lunes   weekday   1.59035639
+7  0.5283019 2012-10-01       30   lunes   weekday   0.69266247
+8  0.8679245 2012-10-01       35   lunes   weekday   1.13794549
+9  0.0000000 2012-10-01       40   lunes   weekday   0.00000000
+10 1.4716981 2012-10-01       45   lunes   weekday   1.79622642
+..       ...        ...      ...     ...       ...          ...</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(lattice)
+<span class="kw">xyplot</span>(weekday.mean ~<span class="st"> </span>interval |<span class="st"> </span>wday.wend, <span class="dt">data =</span> stepsByweekday, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, 
+    <span class="dt">col =</span> <span class="st">&quot;cyan&quot;</span>, <span class="dt">main =</span> <span class="st">&quot;Average number of steps across weekday and weekend&quot;</span>, 
+    <span class="dt">xlab =</span> <span class="st">&quot;Interval&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Number of steps&quot;</span>, <span class="dt">layout =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</code></pre>
+<p><img src="PeerAssessment1_template_files/figure-html/Average%20steps%20for%20weekday%20and%20weekend-1.png" /></p>
+<p>It seems that frequency of steps on weekends is a little more consistent thru intervals than it is on weekdays.</p>
+</div>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
