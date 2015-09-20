@@ -1,21 +1,30 @@
 ---
-title: "PeerAssessment1"
-author: "Antonio Martínez Pineda"
-date: "8 de septiembre de 2015"
-output: html_document
+output: 
+  html_document: 
+    highlight: haddock
+    keep_md: yes
+    self_contained: no
+    theme: cerulean
 ---
+Peer Assessment 1
+===================
+**Antonio Martínez Pineda**
+
+*8 de septiembre de 2015*
+
 ```{r,echo=FALSE}
-knitr::opts_chunk$set(tidy=TRUE,comment=NA,warning=FALSE,message=FALSE) 
+setwd("F:/REPData/Peer Assessment 1")
+knitr::opts_chunk$set(tidy=TRUE,comment=NA,warning=FALSE,message=FALSE,cache=TRUE) 
 ```
 
-This is the analysis for the personal activity's dataset of the Reproducible Research Course. Data are in a comma-separated-value file (.csv) and the first action is obtaining the data. For this we use the `download.file` and `unzip` functions to download and unzip the file. After this we load data into R session.
+This is the analysis for the personal activity's dataset of the Reproducible Research Course. Data are in a comma-separated-value file (.csv) and the first action is obtaining the data, using `download.file` function we download the zipped data then `unzip` function extract the .csv and we load data into R session with `read.csv` function.
 
 ##Obtaining and transforming data
 
 ```{r Obtaining data}
 urldir<-"https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
-nfile<-"activity.zip"
-download.file(urldir,destfile = nfile,method = "libcurl")
+destfile<-"activity.zip"
+download.file(urldir,destfile = destfile,method = "libcurl")
 unzip("activity.zip")
 data<-read.csv("activity.csv")
 ```
@@ -47,6 +56,8 @@ stepsByday<-group_by(data[!is.na(data$steps),],date)%>%summarise(stepsByday=sum(
 stepsByday
 ```
 
+Now the mean for total number of steps taken per day is **`r round(mean(stepsByday$day.mean),2)`** and the median is **`r median(stepsByday$day.median)`**. 
+
 We plot a histogram for total number of steps per day:
 
 ```{r histogram for total number of steps per day}
@@ -65,10 +76,13 @@ with(daily.pattern,plot(interval,interval.ave,type="l",col="cyan",xlab="5-minute
 max.steps<-round(max(daily.pattern$interval.ave),0)
 max.inter<-daily.pattern[daily.pattern$interval.ave==max(daily.pattern$interval.ave),]$interval
 text(max.inter+7,max.steps,labels = paste("Interval",max.inter,"=",max.steps,"steps",sep = " " ))
+```
+
+```{r, echo=FALSE}
 par(mar=c(5.1,4.1,4.1,2.1))
 ```
 
-As we can see in the time series plot the maximum average of steps corresponds to interval `r max.inter` with `r round(max(daily.pattern$interval.ave),2)` steps in average across all the days in the dataset.
+As we can see in the time series plot the maximum average of steps corresponds to interval **`r max.inter`** with **`r round(max(daily.pattern$interval.ave),2)`** steps in average across all the days in the dataset.
 
 ##Imputing missing values
 
@@ -140,7 +154,7 @@ Now we compute average steps taken across weekday and across weekend with `mutat
 stepsByweekday<-group_by(noMissdata,interval,wday.wend)%>%mutate(weekday.mean=mean(steps,na.rm=T))
 stepsByweekday
 library(lattice)
-xyplot(weekday.mean~interval|wday.wend,data = stepsByweekday,type="l",main="Average number of steps across weekday and weekend",xlab="Interval",ylab="Number of steps",layout=c(1,2))
+xyplot(weekday.mean~interval|wday.wend,data = stepsByweekday,type="l",col="cyan",main="Average number of steps across weekday and weekend",xlab="Interval",ylab="Number of steps",layout=c(1,2))
 ```
 
 It seems that frequency of steps on weekends is a little more consistent thru intervals than it is on weekdays.
